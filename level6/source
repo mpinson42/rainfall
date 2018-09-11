@@ -1,0 +1,23 @@
+void    m(void)
+{
+    puts("Nope");
+}
+
+void    n(void)
+{
+    system("/bin/cat /home/user/level7/.pass");
+}
+
+int     main(void)
+{
+    void	(*f)(void);
+    char *str;
+    char *str2;
+
+    str = malloc(0x40);
+    str2 = malloc(0x04);
+    
+    f = m();							//0x080484a5 <+41>:	mov    $0x8048468,%edx
+    strcpy(str, "");
+    f();
+}

